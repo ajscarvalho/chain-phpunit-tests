@@ -1,0 +1,31 @@
+{
+    "name": "sapo-php/testabstraction",
+    "description": "UserArea Lib. All middleware calls about portal Users are made here!",
+    "authors": [
+        {
+            "name": "Alexandre Carvalho",
+            "email": "alexandre-a-carvalho@telecom.pt"
+        }
+    ],
+
+    "minimum-stability": "dev",
+
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@git.gitlab.intra.sapo.pt:sapo-php/guzzle-wrapper.git"
+        }
+    ],
+
+    "require": {
+        "sapo-php/guzzle-wrapper": "dev-master"
+    },
+
+    "autoload": {
+
+        "psr-4": {
+            "Sapo\\TestAbstraction\\": "src/"
+        }
+
+    }
+}

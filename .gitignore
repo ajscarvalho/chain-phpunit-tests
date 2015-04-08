@@ -1,0 +1,14 @@
+*.swp
+nbproject/
+.project
+.idea/
+.settings
+vendor/
+composer.lock
+*.tgz
+*.temp
+*.tmp
+~*
+.~*
+
+/vendor/
