@@ -10,6 +10,9 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     private $serviceHandler;
     private $serviceResult;
 
+    private $currentProperty;
+    private $currentPropertyName;
+
     public function __construct($result = null) { $this->serviceResult = $result; }
 
     protected function setUp($serviceHandler) { $this->serviceHandler = $serviceHandler; }
@@ -25,16 +28,20 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         }
         return $this;
     }
+    
+    public function getServiceCallResult() { return $this->serviceResult; }
 
-    public function expectsObject($objectType, $propertyValidation)
+    public function expectsObject($objectType)//, $propertyValidation)
     {
         $this->assertInstanceOf($objectType, $this->serviceResult, "Must return instance of $objectType");
+/*
         foreach($propertyValidation as $property => $expectedValue)
         {
             $this->assertObjectHasAttribute($property, $this->serviceResult, "Expected $objectType to have attribute $property");
             $actualValue = $this->serviceResult->$property;
             $this->assertEquals($actualValue, $expectedValue, "Expected property $property to have $expectedValue, instead found $actualValue");
         }
+*/
         return $this;
     }
 
@@ -44,7 +51,39 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
-    public function sub($property, $arrayIndex = null)
+    public function expectsProperty($property)
+    {
+        $this->assertObjectHasAttribute($property, $this->serviceResult, "Expected " . get_class($this->serviceResult) . " to have attribute {$property}");
+        $this->currentPropertyName = $property;
+        $this->currentProperty = $this->serviceResult->$property;
+        return $this;
+    }
+
+    public function toEqual($expectedValue)
+    {
+        $this->assertEquals($this->currentProperty, $expectedValue, "Expected property {$this->currentPropertyName} to have $expectedValue, instead found {$this->currentProperty}");
+        return $this;
+    }
+
+    public function toHaveValue()
+    {
+        $this->assertNotEmpty($this->currentProperty, "Expected property {$this->currentPropertyName} to be filled (not empty)");
+        return $this;
+    }
+
+    public function toBeInstanceOf($objectType)
+    {
+        $this->assertInstanceOf($objectType, $this->currentProperty, "{$this->currentPropertyName} must be an instance of $objectType");
+        return $this;
+    }
+
+    public function toBeNativeType($nativeType)
+    {
+        $this->assertInternalType($nativeType, $this->currentProperty, "{$this->currentPropertyName} must be an instance of $nativeType");
+        return $this;
+    }
+
+    public function examineSubTree($property, $arrayIndex = null)
     {
         $obj = $this->serviceResult;
         if ($property !== null) {
