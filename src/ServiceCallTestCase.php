@@ -32,23 +32,21 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     public function getServiceCallResult() { return $this->serviceResult; }
 
     public function expectsInstanceOf($objectType) { return $this->expectsObject($objectType); }
-    public function expectsObject($objectType)//, $propertyValidation)
+    public function expectsObject($objectType)
     {
         $this->assertInstanceOf($objectType, $this->serviceResult, "Must return instance of $objectType");
-/*
-        foreach($propertyValidation as $property => $expectedValue)
-        {
-            $this->assertObjectHasAttribute($property, $this->serviceResult, "Expected $objectType to have attribute $property");
-            $actualValue = $this->serviceResult->$property;
-            $this->assertEquals($actualValue, $expectedValue, "Expected property $property to have $expectedValue, instead found $actualValue");
-        }
-*/
         return $this;
     }
 
     public function expectsNativeType($nativeType)
     {
         $this->assertInternalType($nativeType, $this->serviceResult, "Must return instance of $nativeType");
+        return $this;
+    }
+
+    public function toReturn($expectedValue)
+    {
+        $this->assertEquals($this->serviceResult, $expectedValue, "Expected result was $expectedValue, instead found {$this->serviceResult}");
         return $this;
     }
 
@@ -123,7 +121,6 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     {
         $this->assertNotFalse(method_exists($this->serviceResult, $method), 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
         $result = call_user_func_array(array($this->serviceResult, $method), $params);
-//var_dump($result); 
         return new self($result);
     }
 }
