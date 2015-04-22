@@ -15,23 +15,17 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     private $contextMessage = '';
 
+
     public function __construct($result = null) { $this->serviceResult = $result; }
 
     protected function setUp($serviceHandler) { $this->serviceHandler = $serviceHandler; }
 
-    public function call($function, $params)
-    {
-        try {
-            $this->serviceResult = call_user_func_array(array($this->serviceHandler, $function), $params);
-
-        } catch(RequestException $e) { 
-            $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
-                " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
-        }
-        return $this;
-    }
     
     public function getServiceCallResult() { return $this->serviceResult; }
+
+
+
+#region assertions and expectations
 
     public function expectsInstanceOf($objectType) { return $this->expectsObject($objectType); }
     public function expectsObject($objectType)
@@ -110,6 +104,63 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
+#end region assertions and expectations
+
+
+
+#region exception handling
+
+    private $expectingException = false;
+    private $expectingExceptionCode = null; // compare using $e->getCode()
+    private $expectingExceptionType = null; // compare using get_class($e)
+    private $expectingExceptionMesg = null; // compare using $e->getMessage()
+    
+    /**
+     * calling methods may throw exceptions. 
+     * These exceptions can be handled if a call to expectException is done before the call that actually throws the exception 
+     * you can also pre-determined the expected exception code/type or message (TODO)
+     */
+    public function expectException($code = null, $type = null, $mesg = null)
+    {
+        $this->expectingException = true;
+        if ($code) $this->expectingExceptionCode = $code;
+        if ($type) $this->expectingExceptionType = $type;
+        if ($mesg) $this->expectingExceptionMesg = $mesg;
+        
+        return $this;
+    }
+
+    public function resetExpectException()
+    {
+        $this->expectingException = false;
+        $this->expectingExceptionCode = $this->expectingExceptionType = $this->expectingExceptionMesg = null;
+    }
+
+    public function handleException($e)
+    {
+        if ($this->expectingExceptionCode) 
+            $this->assertEquals($this->expectingExceptionCode, $e->getCode(), 
+                $this->contextMessage . "Expecting Exception code {$this->expectingExceptionCode}, got {$e->getCode()}");
+
+        if ($this->expectingExceptionType) {
+            $exceptionType = get_class($e);
+            $this->assertEquals($this->expectingExceptionType, $exceptionType, 
+                $this->contextMessage . "Expecting Exception type {$this->expectingExceptionType}, got {$exceptionType}");
+        }
+
+        if ($this->expectingExceptionMesg)
+            $this->assertContains($this->expectingExceptionMesg, $e->getMessage(), 
+                $this->contextMessage . "Expecting Exception Message Containing {$this->expectingExceptionMesg}, got {$e->getMessage()}");
+
+        $this->resetExpectException();
+    }
+
+#end region exception handling
+
+
+
+#region navigating result, calling methods on service / result objects
+
     public function examineSubTree($property, $arrayIndex = null, $contextMessage = null)
     {
         $obj = $this->serviceResult;
@@ -128,6 +179,68 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $result;
     }
 
+    /**
+     * A convenient way to call methods on result objects is to call methods on this object as if the method was defined here
+     * Another convenience is to call methods on the service handler as they were defined here
+     */
+    public function __call($method, $arguments) {
+        $result = null;
+        $methodNotFound = false;
+
+        try {
+            if ($this->serviceResult && method_exists($this->serviceResult, $method))
+                $result =  $this->callObjectMethod($method, $arguments);
+            else if (method_exists($this->serviceHandler, $method))
+                $result = $this->call($method, $arguments);
+            else 
+                $methodNotFound = true;
+
+        } catch(\Exception $e) { 
+            if (!$this->expectingException || $e->getCode() == 666) throw $e;
+            return $this->handleException($e);
+        }
+
+        if ($methodNotFound) throw new \Exception('Invalid method call: ' . $method);
+
+//      if (!$result)  // DO SOMETHING?
+        if ($this->expectingException) throw new Exception('Was expecting an Exception to be thrown');
+
+        return $result;
+    }
+
+    public function call($function, $params)
+    {
+        try {
+            $this->serviceResult = call_user_func_array(array($this->serviceHandler, $function), $params);
+
+        } catch(RequestException $e) { 
+            $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
+                " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
+        }
+        return $this;
+    }
+
+
+    public function callObjectMethod($method, $arguments)
+    {
+        $this->assertNotFalse(method_exists($this->serviceResult, $method), 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
+        try {
+            $result = call_user_func_array(array($this->serviceResult, $method), $arguments);
+        } 
+        catch(\Exception $e)
+        { 
+            if (!$this->expectingException) throw $e;
+            return $this->handleException($e);
+        }
+        return new self($result);
+    }
+
+#end navigating result, calling methods on service / result objects
+
+
+
+#region messaging and debugging
+
     public function context($contextMessage) 
     {
         if (!$contextMessage) $this->contextMessage = '';
@@ -135,26 +248,9 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this; 
     }
 
+    public function stopAndDebug() { echo "\n\nstopAndDebug called. Exiting...\nLast Result:\n" . print_r($this->serviceResult, 1); exit(1); }
 
-    /**
-     * A convenient way to call methods on result objects is to call methods on this object as if the method was defined here
-     * Another convenience is to call methods on the service handler as they were defined here
-     */
-    public function __call($method, $arguments) {
-        if ($this->serviceResult && method_exists($this->serviceResult, $method))
-            return $this->callObjectMethod($method, $arguments);
-        else if (method_exists($this->serviceHandler, $method))
-            return $this->call($method, $arguments);
-        throw new \Exception('Invalid method call: ' . $method);
-    }
+#end region messaging and debugging
 
-    public function callObjectMethod($method, $arguments)
-    {
-        $this->assertNotFalse(method_exists($this->serviceResult, $method), 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
-        $result = call_user_func_array(array($this->serviceResult, $method), $arguments);
-        return new self($result);
-    }
- 
-    public function stopAndDebug() { echo "\n\nstopAndDebug called. Exiting...\nLast Result:\n" . print_r($this->serviceResult, 1); die; }
 }
 
