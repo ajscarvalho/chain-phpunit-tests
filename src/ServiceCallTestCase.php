@@ -31,6 +31,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     
     public function getServiceCallResult() { return $this->serviceResult; }
 
+    public function expectsInstanceOf($objectType) { return $this->expectsObject($objectType); }
     public function expectsObject($objectType)//, $propertyValidation)
     {
         $this->assertInstanceOf($objectType, $this->serviceResult, "Must return instance of $objectType");
@@ -65,9 +66,28 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
+  public function toBeSimilarTo($expectedValue)
+    {
+        $this->assertNotFalse($this->currentProperty == $expectedValue, "Expected property {$this->currentPropertyName} to have $expectedValue, instead found {$this->currentProperty}");
+        return $this;
+    }
+
+    public function toBeGreaterThan($comparisionValue)
+    {
+        $this->assertGreaterThan($comparisionValue, $this->currentProperty, "Expected property {$this->currentPropertyName} to be Greater than {$comparisionValue}, instead found {$this->currentProperty}");
+        return $this;
+    }
+
     public function toHaveValue()
     {
         $this->assertNotEmpty($this->currentProperty, "Expected property {$this->currentPropertyName} to be filled (not empty)");
+        return $this;
+    }
+    
+    public function toEqualOneOf()
+    {
+        $args = func_get_args();
+        $this->assertNotFalse(in_array($this->currentProperty, $args), "Expected property {$this->currentPropertyName} to have one of the following values (" . implode(',', $args) . ") - instead found {$this->currentProperty}");
         return $this;
     }
 
@@ -91,10 +111,20 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
             $obj = $obj->$property;
         }
         if ($arrayIndex !== null) {
-            $this->assertInternalType('array', $obj, $property . " must be instance of array");
+            $propName = $property ? $property : ($this->currentPropertyName ? $this->currentPropertyName : 'result');
+            $this->assertInternalType('array', $obj, "{$propName} must be instance of array");
+            $this->assertArrayHasKey($arrayIndex, $obj, "{$propName} must have key {$arrayIndex}");
             $obj = $obj[$arrayIndex];
         }
         return new self($obj);
+    }
+
+    public function callObjectMethod($method, $params)
+    {
+        $this->assertNotFalse(method_exists($this->serviceResult, $method), 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
+        $result = call_user_func_array(array($this->serviceResult, $method), $params);
+//var_dump($result); 
+        return new self($result);
     }
 }
 
