@@ -175,7 +175,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
             $obj = $obj[$arrayIndex];
         }
         $result = new self($obj);
-        if ($contextMessage) $result->context($contextMessage);
+        if ($contextMessage) $result->proving($contextMessage);
         return $result;
     }
 
@@ -241,7 +241,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
 #region messaging and debugging
 
-    public function context($contextMessage) 
+    protected function proving($contextMessage) 
     {
         if (!$contextMessage) $this->contextMessage = '';
         else $this->contextMessage = ' * ' .$contextMessage . ' => '; 
