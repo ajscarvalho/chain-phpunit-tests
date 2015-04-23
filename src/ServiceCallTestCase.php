@@ -35,17 +35,6 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
-/* removed this stupid guzzle dependency
-        } catch(RequestException $e) { 
-            $this->fail('Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
-                " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
-        }
-*/
-        } catch(\Exception $e) { 
-            $this->fail('Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
-                " failed with exception: \n". $e->getMessage()); 
-        }
-
     public function expectsNativeType($nativeType)
     {
         $this->assertInternalType($nativeType, $this->serviceResult, $this->contextMessage . "Must return instance of $nativeType");
@@ -224,10 +213,16 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     {
         try {
             $this->serviceResult = call_user_func_array(array($this->serviceHandler, $function), $params);
-
+/* removed this stupid guzzle dependency
         } catch(RequestException $e) { 
             $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
                 " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
+        }
+
+*/
+        } catch(\Exception $e) { 
+            $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
+                " failed with exception: \n". $e->getMessage()); 
         }
         return $this;
     }
