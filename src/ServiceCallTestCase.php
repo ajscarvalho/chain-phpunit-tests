@@ -2,8 +2,9 @@
 
 namespace Sapo\TestAbstraction;
 
-use GuzzleHttp\Exception\RequestException;
-use Sapo\GuzzleWrapper\GuzzleWrapper;
+// removed this stupid guzzle dependency - where we need to debug the service we can rewrite this call funcion on the test, or extend this class
+//use GuzzleHttp\Exception\RequestException;
+//use Sapo\GuzzleWrapper\GuzzleWrapper;
 
 class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
@@ -22,10 +23,17 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         try {
             $this->serviceResult = call_user_func_array(array($this->serviceHandler, $function), $params);
 
+/* removed this stupid guzzle dependency
         } catch(RequestException $e) { 
             $this->fail('Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
                 " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
         }
+*/
+        } catch(\Exception $e) { 
+            $this->fail('Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
+                " failed with exception: \n". $e->getMessage()); 
+        }
+
         return $this;
     }
     

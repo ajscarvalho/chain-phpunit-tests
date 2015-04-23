@@ -1,6 +1,6 @@
 {
     "name": "sapo-php/testabstraction",
-    "description": "UserArea Lib. All middleware calls about portal Users are made here!",
+    "description": "A test abstraction lib that allows you to write tests like: $this->$fname($param1...$paramN)->expectInstanceOf($className)->expectProperty($prop)->toEqual($value) and even $this->expectException($errorCode, $exceptionClass, $exceptionMessageMatch)->doSomethingEvilThatThrowsException()",
     "authors": [
         {
             "name": "Alexandre Carvalho",
@@ -11,14 +11,9 @@
     "minimum-stability": "dev",
 
     "repositories": [
-        {
-            "type": "git",
-            "url": "git@git.gitlab.intra.sapo.pt:sapo-php/guzzle-wrapper.git"
-        }
     ],
 
     "require": {
-        "sapo-php/guzzle-wrapper": "dev-master"
     },
 
     "autoload": {
