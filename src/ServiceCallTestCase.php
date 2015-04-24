@@ -21,7 +21,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     protected function setUp($serviceHandler) { $this->serviceHandler = $serviceHandler; }
 
-    
+    public function analyze($object) { $this->serviceResult = $object; return $this; }
     public function getServiceCallResult() { return $this->serviceResult; }
 
 
