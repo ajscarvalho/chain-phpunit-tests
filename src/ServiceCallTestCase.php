@@ -188,23 +188,17 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         $result = null;
         $methodNotFound = false;
 
-        try {
-            if ($this->serviceResult && method_exists($this->serviceResult, $method))
-                $result =  $this->callObjectMethod($method, $arguments);
-            else if (method_exists($this->serviceHandler, $method))
-                $result = $this->call($method, $arguments);
-            else 
-                $methodNotFound = true;
-
-        } catch(\Exception $e) { 
-            if (!$this->expectingException || $e->getCode() == 666) throw $e;
-            return $this->handleException($e);
-        }
+        if ($this->serviceResult && method_exists($this->serviceResult, $method))
+            $result =  $this->callObjectMethod($method, $arguments);
+        else if (method_exists($this->serviceHandler, $method))
+            $result = $this->call($method, $arguments);
+        else 
+            $methodNotFound = true;
 
         if ($methodNotFound) throw new \Exception('Invalid method call: ' . $method);
 
 //      if (!$result)  // DO SOMETHING?
-        if ($this->expectingException) throw new Exception('Was expecting an Exception to be thrown');
+        if ($this->expectingException) throw new \Exception('Was expecting an Exception to be thrown');
 
         return $result;
     }
@@ -213,16 +207,15 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     {
         try {
             $this->serviceResult = call_user_func_array(array($this->serviceHandler, $function), $params);
-/* removed this stupid guzzle dependency
-        } catch(RequestException $e) { 
-            $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
-                " failed with exception: \n". GuzzleWrapper::parseExceptionMessage($e)); 
-        }
 
-*/
         } catch(\Exception $e) { 
-            $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
-                " failed with exception: \n". $e->getMessage()); 
+
+            if (!$this->expectingException || $e->getCode() == 666) 
+                return $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->serviceHandler) . '::' . $function . 
+                    " failed with exception: {$e->getCode()}\n{$e->getMessage()}\nTrace: " . 
+                    (($e->getCode() < 100) ? $e->getTraceAsString() : '')); 
+
+            return $this->handleException($e);
         }
         return $this;
     }
