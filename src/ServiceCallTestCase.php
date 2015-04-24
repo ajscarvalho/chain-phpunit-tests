@@ -41,6 +41,12 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
+    public function expectsNullResult()
+    {
+        $this->assertNull($this->serviceResult, $this->contextMessage . "Must return null, actually returned: " . gettype($this->serviceResult));
+        return $this;
+    }
+
     public function expectsCardinality($expectedCardinality)
     {
         $actualCardinality = count($this->serviceResult);
@@ -195,10 +201,10 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         else 
             $methodNotFound = true;
 
-        if ($methodNotFound) throw new \Exception('Invalid method call: ' . $method);
+        if ($methodNotFound) throw new \Exception($this->contextMessage . 'Invalid method call: ' . $method);
 
 //      if (!$result)  // DO SOMETHING?
-        if ($this->expectingException) throw new \Exception('Was expecting an Exception to be thrown');
+        if ($this->expectingException) throw new \Exception($this->contextMessage . 'Was expecting an Exception to be thrown');
 
         return $result;
     }
@@ -223,7 +229,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     public function callObjectMethod($method, $arguments)
     {
-        $this->assertNotFalse(method_exists($this->serviceResult, $method), 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
+        $this->assertNotFalse(method_exists($this->serviceResult, $method), $this->contextMessage . 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->serviceResult));
         try {
             $result = call_user_func_array(array($this->serviceResult, $method), $arguments);
         } 
