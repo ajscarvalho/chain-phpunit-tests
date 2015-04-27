@@ -2,10 +2,14 @@
 
 namespace Sapo\TestAbstraction;
 
-// removed this stupid guzzle dependency - where we need to debug the service we can rewrite this call funcion on the test, or extend this class
-//use GuzzleHttp\Exception\RequestException;
-//use Sapo\GuzzleWrapper\GuzzleWrapper;
-
+/**
+ * way forward:
+ * instead of creating a new object when calling a method on an object or by examineSubTree,
+ * use a stack of objects under analysis and permit pop back
+ * 
+ * rename $serviceResult, getServiceCallResult(), examineSubTree(),
+ * maybe rename call to invokeOnService, callObjectMethod to invokeOnObject
+ */ 
 class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     private $serviceHandler;
@@ -19,14 +23,20 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     public function __construct($result = null) { $this->serviceResult = $result; }
 
+    /** 
+     * setUp is deprecated here, as it is a function that takes no parameters and is run before every test 
+     * @deprecated use analyzeService instead
+     */
+     
     protected function setUp($serviceHandler) { $this->serviceHandler = $serviceHandler; }
+    protected function analyzeService($serviceHandler) { $this->serviceHandler = $serviceHandler; return $this; }
 
-    public function analyze($object) { $this->serviceResult = $object; return $this; }
+    public function analyzeObject($object) { $this->serviceResult = $object; return $this; }
     public function getServiceCallResult() { return $this->serviceResult; }
 
 
 
-#region assertions and expectations
+#region expectations
 
     public function expectsInstanceOf($objectType) { return $this->expectsObject($objectType); }
     public function expectsObject($objectType)
@@ -54,17 +64,23 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
-    public function toReturn($expectedValue)
-    {
-        $this->assertEquals($this->serviceResult, $expectedValue, $this->contextMessage . "Expected result was $expectedValue, instead found {$this->serviceResult}");
-        return $this;
-    }
-
     public function expectsProperty($property)
     {
         $this->assertObjectHasAttribute($property, $this->serviceResult, $this->contextMessage . "Expected " . get_class($this->serviceResult) . " to have attribute {$property}");
         $this->currentPropertyName = $property;
         $this->currentProperty = $this->serviceResult->$property;
+        return $this;
+    }
+
+#end region expectations
+
+
+
+#region value tests
+
+    public function toReturn($expectedValue)
+    {
+        $this->assertEquals($this->serviceResult, $expectedValue, $this->contextMessage . "Expected result was $expectedValue, instead found {$this->serviceResult}");
         return $this;
     }
 
@@ -74,7 +90,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
-  public function toBeSimilarTo($expectedValue)
+    public function toBeSimilarTo($expectedValue)
     {
         $this->assertNotFalse($this->currentProperty == $expectedValue, $this->contextMessage . "Expected property {$this->currentPropertyName} to have $expectedValue, instead found {$this->currentProperty}");
         return $this;
@@ -111,7 +127,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
-#end region assertions and expectations
+#region value tests
 
 
 
