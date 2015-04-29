@@ -127,6 +127,21 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         return $this;
     }
 
+    /** 
+     * tests that the result array is contained in the expectedArray, expectedArray may have more keys
+     * values on each result array key must match values on the expected Array keys 
+     * (it's not a set comparision)
+     */
+    public function toBeContainedIn($expectedArray)
+    {
+        $this->assertInternalType('array', $this->currentProperty, $this->contextMessage . "{$this->currentPropertyName} must be an instance of array");
+        $this->assertInternalType('array', $expectedArray, $this->contextMessage . "Comparision value must be an instance of array");
+        foreach($this->currentProperty as $key => $value)
+            $this->assertEquals($expectedArray[$key], $this->currentProperty[$key], $this->contextMessage . "Array being compared is not included in the result (offending key {$key}) expected {$expectedArray[$key]}, got {$this->currentProperty[$key]}");
+
+        return $this;        
+    }
+
 #region value tests
 
 
