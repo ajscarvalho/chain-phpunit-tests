@@ -34,6 +34,11 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
     public function analyzeObject($object) { $this->serviceResult = $object; return $this; }
     public function getServiceCallResult() { return $this->serviceResult; }
 
+    public function analyzeValue($name, $value) { 
+        $this->currentPropertyName = $name; 
+        $this->currentProperty = $value;
+        return $this; 
+    }
 
 
 #region expectations
