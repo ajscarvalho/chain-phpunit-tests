@@ -91,7 +91,7 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
 
     public function toEqual($expectedValue)
     {
-        $this->assertEquals($this->currentProperty, $expectedValue, $this->contextMessage . "Expected property {$this->currentPropertyName} to have $expectedValue, instead found {$this->currentProperty}");
+        $this->assertEquals($expectedValue, $this->currentProperty, $this->contextMessage . "Expected property {$this->currentPropertyName} to have $expectedValue, instead found {$this->currentProperty}");
         return $this;
     }
 
@@ -143,6 +143,18 @@ class ServiceCallTestCase extends \PHPUnit_Framework_TestCase {
         $this->assertInternalType('array', $expectedArray, $this->contextMessage . "Comparision value must be an instance of array");
         foreach($this->currentProperty as $key => $value)
             $this->assertEquals($expectedArray[$key], $this->currentProperty[$key], $this->contextMessage . "Array being compared is not included in the result (offending key {$key}) expected {$expectedArray[$key]}, got {$this->currentProperty[$key]}");
+
+        return $this;        
+    }
+
+    /** 
+     * tests that the result string starts with the expectedPrefix
+     */
+    public function toStartWith($expectedPrefix)
+    {
+        $this->assertInternalType('string', $this->currentProperty, $this->contextMessage . "{$this->currentPropertyName} must be an instance of string");
+        $this->assertInternalType('string', $expectedPrefix, $this->contextMessage . "Comparision value must be an instance of string");
+        $this->assertStringStartsWith($expectedPrefix, $this->currentProperty, $this->contextMessage . "{$this->currentPropertyName} doesn't start with {$expectedPrefix}, instead starts with " . substr($this->currentProperty, 0, strlen($expectedPrefix)) );
 
         return $this;        
     }
