@@ -8,17 +8,6 @@ use ReflectionException;
 use PHPUnit_Framework_TestCase;
 
 /**
- * This object is the v2 of the ServiceCallTestCase
- * way forward:
- * instead of creating a new object when calling a method on an object or by examineSubTree,
- * use a stack of objects under analysis and permit pop back
- * 
- * maybe rename call to invokeOnService, callObjectMethod to invokeOnObject
- * 
- * must rename proving($contextMessage)
- * proving may be linked to property, current stack object, current api... etc...
- * 
- * try to make "has" an alias of "returns" on __call
  */ 
 class ResultChecker extends PHPUnit_Framework_TestCase {
 
@@ -38,6 +27,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 #end region properties
 
 
+    public function testMeAsPhpUnitTriesToTestThisClass(){ $this->assertFalse(false); }
 
 #region setup of things to be analyzed
 
@@ -497,6 +487,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * calling methods may throw exceptions. 
      * These exceptions can be handled if a call to expectException is done before the call that actually throws the exception 
      * you can also pre-determine the expected exception code/type or message
+     * TESTED by ...
      */
 
     private $expectingException = false; // state variable that indicates if we're expecting an exception to be thrown
@@ -537,6 +528,8 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * internal function to handle thrown exceptions, trying to match code, class and message
      * resets Exception expectation at the end
+     * @param Exception $e
+     * @return $this allowing exception throwing methods to be chainable
      */
     private function handleException($e)
     {
@@ -555,6 +548,8 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
                 $this->contextMessage . "Expecting Exception Message Containing {$this->expectingExceptionMesg}, got {$e->getMessage()}");
 
         $this->resetExpectException();
+
+        return $this;
     }
 
 #end region exception handling
