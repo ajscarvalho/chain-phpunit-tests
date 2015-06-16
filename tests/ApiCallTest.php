@@ -52,7 +52,7 @@ class ApiCallTestCase extends Sapo\TestAbstraction\ResultChecker
         $this->checkAPI(self::$api)
             ->provingThat("Boolean tests works actually works")
                 ->getTrue()->returnsBoolean()
-                ->getFalse()->returnsBoolean()
+                ->getFalse()->returnsBoolean();
 
         $this->getZero()->mustFail('returnsBoolean', [], 'int 0 is not boolean');
     }
