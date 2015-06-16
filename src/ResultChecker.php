@@ -2,7 +2,7 @@
 
 namespace Sapo\TestAbstraction;
 
-use ReflectionClass;
+use ReflectionObject;
 use Exception;
 use ReflectionException;
 use PHPUnit_Framework_TestCase;
@@ -121,6 +121,14 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     }
 
     /**
+     * getters to enable cross testing variable dependencies
+     * @return mixed variable value (simple native type)
+     * UNTESTED!
+     */
+    protected function getVariableValue() { return $this->variableValue; }
+    protected function getVariableName() { return $this->variableName; }
+
+    /**
      * get the context message for the test being performed related to the object under analysis on the stack
      * method should be private but for testing purposes it must be protected
      * @return string message
@@ -211,15 +219,17 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     protected function returnsInteger() { return $this->returnsNativeType('int'); }
     /** TESTED in testCheckThatIndex */
     protected function returnsArray() { return $this->returnsNativeType('array'); }
+    /** TESTED in testBooleanResult */
+    protected function returnsBoolean() { return $this->returnsNativeType('boolean'); }
     /** TESTED in testDouble - this is not supported in phpunit */
     protected function returnsDouble() { return $this->returnsFloatingPointNumber(); }
     protected function returnsFloat() { return $this->returnsFloatingPointNumber(); }
     protected function returnsFloatingPointNumber()
     {
-		$value = $this->underAnalysis();
-		$this->assertEquals('double', gettype($value)); // it's double for this version of php, will it be the same in any version?
+        $value = $this->underAnalysis();
+        $this->assertEquals('double', gettype($value)); // it's double for this version of php, will it be the same in any version?
         return $this->checkVariable(self::DEFAULT_NAME, $value);
-	}
+    }
 
     /**
      * Checks that the object under analysis is Null (Function/method return value)
@@ -257,15 +267,15 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     private function assertPropertyIsPubliclyAvailable($property)
     {
         $object = $this->underAnalysis();
-        $classReflect = new ReflectionClass(get_class($object));
+        $objReflect = new ReflectionObject($object);
 
         try {
-            $propReflect = $classReflect->getProperty($property);
+            $propReflect = $objReflect->getProperty($property);
             if ($propReflect->isPublic()) return $object->$property;
-        } catch(ReflectionException $e) {}
+        } catch(ReflectionException $e) { /* echo $e->getMessage(); var_dump($object); */}
 
         try {
-            $methodReflect = $classReflect->getMethod('__get');
+            $methodReflect = $objReflect->getMethod('__get');
             return $object->$property;
         } catch(ReflectionException $e) {}
 
@@ -422,9 +432,24 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         $this->assertInternalType($nativeType, $this->variableValue, $this->contextMessage . "{$this->variableName} must be an instance of $nativeType");
         return $this;
     }
-    protected function beingAString()   { return $this->beingOfNativeType('string'); }
-    protected function beingAnInteger() { return $this->beingOfNativeType('int'); }
-    protected function beingAnArray()   { return $this->beingOfNativeType('array'); }
+    protected function beingABoolean()   { return $this->beingBoolean(); }
+    protected function beingBoolean()    { return $this->beingOfNativeType('boolean'); }
+    protected function beingAString()   { return $this->beingString(); }
+    protected function beingString()    { return $this->beingOfNativeType('string'); }
+    protected function beingAnInteger() { return $this->beingInteger(); }
+    protected function beingInteger()   { return $this->beingOfNativeType('int'); }
+    protected function beingAnArray()   { return $this->beingArray(); }
+    protected function beingArray()     { return $this->beingOfNativeType('array'); }
+    protected function beingADouble()   { return $this->beingFloatingPointNumber(); }
+    protected function beingDouble()    { return $this->beingFloatingPointNumber(); }
+    protected function beingAFloat()    { return $this->beingFloatingPointNumber(); }
+    protected function beingFloat()     { return $this->beingFloatingPointNumber(); }
+    protected function beinAFloatingPointNumber()
+    {
+        $value = $this->underAnalysis();
+        $this->assertEquals('double', gettype($this->variableValue)); // it's double for this version of php, will it be the same in any version?
+        return $this;
+    }
 
     /** 
      * Tests that the result array is contained in the expectedArray.
@@ -618,6 +643,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      */
     private $internalAlias = array(
         'has' => 'returns', // try hasNativeType => returnsNativeType
+        'thatIs' => 'returns', // try thatIsString => returnsString
         'returns' => 'thatHas', // hasSomeValue => returnsSomeValue => thatHasSomeValue
         'isOneOf' => 'beingOneOf',
         'is' => 'thatIs', // isSimilarTo => thatIsSimilarTo
@@ -626,6 +652,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         'shouldBeEqualTo' => 'thatEquals',
         'shouldStartWith' => 'thatStartsWith',
         'ofNativeType' => 'beingOfNativeType',
+        //'' => 'with', // withExistingProperty
 //    , 'greaterThan' => 'thatIsGreaterThan'
     );
 
@@ -670,11 +697,11 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 //      if (!$result)  // DO SOMETHING?
         if ($this->expectingException) throw new Exception($this->contextMessage . 'Was expecting an Exception to be thrown');
 
-		$resultValue = $this->underAnalysis(); 
+        $resultValue = $this->underAnalysis(); 
 
-		if (in_array(gettype($resultValue), array('string', 'int', 'integer', 'array', 'double')))
+        if (in_array(gettype($resultValue), array('string', 'int', 'integer', 'array', 'double')))
         {
-			$this->checkVariable('resultOf_' . $method, $resultValue);
+            $this->checkVariable('resultOf_' . $method, $resultValue);
         }
         return $result;
     }
