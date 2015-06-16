@@ -256,7 +256,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      {
         $this->returnsArray(); // check that the result is an Array
         $actualCardinality = count($this->underAnalysis());
-        $this->assertEquals($actualCardinality, $expectedCardinality, $this->contextMessage . "Must return $expectedCardinality item(s) in result set, found $actualCardinality");
+        $this->assertCount($expectedCardinality, $this->underAnalysis(), $this->contextMessage . "Must return $expectedCardinality item(s) in result set, found $actualCardinality");
         return $this;
     }
 
@@ -342,6 +342,9 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      */
     protected function thatEquals($expectedValue)
     {
+        $expectedType = gettype($expectedValue);
+        $actualType = gettype($this->variableValue);
+        $this->assertInternalType($expectedType, $this->variableValue, $this->contextMessage . "Expected property {$this->variableName} to be of type {$expectedType}, instead found $actualType");
         $this->assertEquals($expectedValue, $this->variableValue, $this->contextMessage . "Expected property {$this->variableName} to have $expectedValue, instead found {$this->variableValue}");
         return $this;
     }
@@ -354,8 +357,8 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * TESTED by testThatIsSimilarToFails
      */
     protected function thatIsSimilarTo($expectedValue)
-    {//@assertNotFalse
-        $this->assertFalse($expectedValue != $this->variableValue, $this->contextMessage . "Expected property {$this->variableName} to have $expectedValue, instead found {$this->variableValue}");
+    {
+        $this->assertEquals($expectedValue, $this->variableValue, $this->contextMessage . "Expected property {$this->variableName} to have $expectedValue, instead found {$this->variableValue}");
         return $this;
     }
 
@@ -401,9 +404,10 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * TESTED by testbeingOneOfFails
      */
     protected function beingOneOf()
-    {//@assertNotFalse
+    {
         $args = func_get_args();
-        $this->assertFalse(!in_array($this->variableValue, $args), $this->contextMessage . "Expected property {$this->variableName} to have one of the following values (" . implode(',', $args) . ") - instead found {$this->variableValue}");
+        //$this->assertFalse(!in_array($this->variableValue, $args), $this->contextMessage . "Expected property {$this->variableName} to have one of the following values (" . implode(',', $args) . ") - instead found {$this->variableValue}");
+        $this->assertContains($this->variableValue, $args, $this->contextMessage . "Expected property {$this->variableName} to have one of the following values (" . implode(',', $args) . ") - instead found {$this->variableValue}");
         return $this;
     }
 
@@ -711,7 +715,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * adds result to the analysis stack if successful.
      * Handles exception if expecting it, fails otherwise
      */
-    private function callAPI($function, $params)
+    protected function callAPI($function, $params)
     {
         try {
             $functionResult = call_user_func_array(array($this->api, $function), $params);
@@ -734,7 +738,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * adds result to the analysis stack if successful.
      * Handles exception if expecting it, fails otherwise
      */
-    private function callObjectMethod($method, $arguments)
+    protected function callObjectMethod($method, $arguments)
     {//@assertNotFalse
         $this->assertFalse(!method_exists($this->underAnalysis(), $method), $this->contextMessage . 'O método ' . $method . ' deve existir no Objecto ' . get_class($this->underAnalysis()));
         try {
