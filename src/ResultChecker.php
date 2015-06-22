@@ -491,6 +491,36 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     }
 
     /** 
+     * Tests that the resulting boolean is true.
+     * <code>
+     *      $this->getZoo()->getLion()->isFeline()->returnsBoolean()->thatIsTrue()
+     * </code>
+     * 
+     * @return this (chainable)
+     * UNTESTED
+     */
+    protected function thatIsTrue()
+    { 
+        $this->assertNotFalse($this->variableValue, $this->contextMessage . "{$this->variableName} must be true");
+        return $this; 
+    }
+
+    /** 
+     * Tests that the resulting boolean is false.
+     * <code>
+     *      $this->getZoo()->getMonkey()->isFeline()->returnsBoolean()->thatIsFalse()
+     * </code>
+     * 
+     * @return this (chainable)
+     * UNTESTED
+     */
+    protected function thatIsFalse()
+    {
+        $this->assertFalse($this->variableValue, $this->contextMessage . "{$this->variableName} must be false");
+        return $this; 
+    }
+    
+    /** 
      * tests that the result string starts with the expectedPrefix
      * @param string $expectedPrefix the variable must start with this string
      * @return this (chainable)
@@ -683,6 +713,9 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 
             // remove "and" from method start (and lowercases the next letter)
             $method = preg_replace_callback('/^(?:and)(\w)/', function($match) { return strtolower($match[1]); }, $method);
+            // remove Also in the middle
+            $method = preg_replace_callback('/(\w)Also(\w)/', function($match) { return $match[1] . $match[2]; }, $method); 
+
             if (method_exists($this, $method)) 
                 return call_user_func_array(array($this, $method), $arguments); // internal method gets called immediatelly
 
