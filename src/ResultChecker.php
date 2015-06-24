@@ -520,6 +520,12 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         return $this; 
     }
     
+    /**
+     * Just acts as documentation
+     * @return this (chainable)
+     */
+    protected function thatIsOptional() { return $this; }
+    
     /** 
      * tests that the result string starts with the expectedPrefix
      * @param string $expectedPrefix the variable must start with this string
@@ -686,6 +692,11 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         'shouldBeEqualTo' => 'thatEquals',
         'shouldStartWith' => 'thatStartsWith',
         'ofNativeType' => 'beingOfNativeType',
+
+        // more synonym words
+        'contains' => 'returns', // similar to has, try containsNativeType => returnsNativeType
+        'lookInto' => 'with', // lookIntoExistingProperty => withExistingProperty
+
         //'' => 'with', // withExistingProperty
 //    , 'greaterThan' => 'thatIsGreaterThan'
     );
@@ -759,7 +770,8 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
             if (!$this->expectingException)// || $e->getCode() == 666) 
                 return $this->fail($this->contextMessage . 'Call to operation ' . get_class($this->api) . '::' . $function . 
                     " failed with exception: {$e->getCode()}\n{$e->getMessage()}\nTrace: " . 
-                    (($e->getCode() < 100) ? $e->getTraceAsString() : '')); 
+// allways present a trace?                    (($e->getCode() < 100) ? $e->getTraceAsString() : '')); 
+                        $e->getTraceAsString());
 
             return $this->handleException($e);
         }
