@@ -24,6 +24,10 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     private $contextMessage = ''; // gives context on the errors
     //private $contextStack = []; // stacks context messages // @TODO remove?
 
+    // handle searching objects on lists
+    private $searchBy = null;
+    private $searching = null;
+
 #end region properties
 
 
@@ -395,7 +399,28 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         $this->assertFalse(false, $this->contextMessage . "variable is filled with some Value"); // just to mark test passing
         return $this;
     }
-    
+
+    /**
+     * Checks that the variable under analysis has some null value
+     * @return this (chainable)
+     * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('motorOil')->thatIsEmpty(); // e.g. "red" </code>
+     * UNTESTED
+     */
+    protected function returnsEmpty()    
+    {
+        switch(gettype($this->variableValue))
+        {
+            case 'string': 
+            case 'array':
+                $this->assertEmpty($this->variableValue, $this->contextMessage . "Expected property {$this->variableName} to be empty");
+                return $this;
+            case 'NULL': 
+                $this->assertFalse(false); // marks as passed
+                return $this;
+        }
+        $this->fail($this->contextMessage . "Expected property {$this->variableName} to be empty");
+    }
+
     /**
      * Match a value against a list of possible values
      * @param mixed $values,... variable value is checked against the argument list to see if it matches one of the arguments
@@ -460,8 +485,8 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * the values on each result array key must match values on the expected Array keys (on the same key)
      * Note: The expectedArray may have more keys than the result (it's not a set comparision)
      * <code>
-     *      $this->getZoo()->withExistingProperty('felines')->thatIsContainedIn(["Cat", "Tiger"]); // the zoo may only have Cats or Tigers in the felines area
-     *      $this->getZoo()->withExistingProperty('felines')->beingOfNativeType('array')->thatIsContainedIn(["Cat", "Tiger"]);
+     *      $this->getZoo()->withExistingProperty('felines')->thatIsSubHashTableOf(["Cat", "Tiger"]); // the zoo may only have Cats or Tigers in the felines area
+     *      $this->getZoo()->withExistingProperty('felines')->beingOfNativeType('array')->thatIsSubHashTableOf(["Cat", "Tiger"]);
      * </code>
      * 
      * @param array $expectedArray the list of values that can possibly be returned in the return array
@@ -543,6 +568,118 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     }
 
 #region value tests
+
+
+
+#region search
+
+    /**
+     * Setup search for a particular object in an array returning the first instance that matches
+     * to do the actual search you must call the "matching" function
+     * 
+     * @param $propertyName the property to analyze
+     * @return this (chainable)
+     * <code> 
+     *      $this->getFriendList()->searchItemWith('name')->matching('Peter')
+     *      //Or
+     *      $this->getFriendList()->searchItemByName('Peter')
+     * </code>
+     */
+    protected function searchItemWith($propertyName)
+    {
+        $this->searchBy = $propertyName;
+        $this->searching = true;
+        return $this;
+    }
+
+    /** 
+     * the negative preposition of searchItemWith -> setup a search that must fail
+     * 
+     * @see searchItemWith
+     * @param $propertyName the property to analyze
+     * @return this (chainable)
+     */
+    protected function failToSearchItemWith($propertyName)
+    {
+        $this->searchBy = $propertyName;
+        $this->searching = false;
+        return $this;
+    }
+
+   /**
+     * run search for a particular object in an array returning the first instance that matches
+     * to do the actual search you must first call the "searchItemWith" function
+     * 
+     * @param $propertyValue the value to match agains the setup property
+     * @return this (chainable)
+     * <code> 
+     *      $this->getFriendList()->searchItemWith('name')->matching('Peter')
+     *      //Or
+     *      $this->getFriendList()->searchItemByName('Peter')
+     * </code>
+     */
+    protected function matching($propertyValue)
+    {
+        $this->assertNotFalse($this->searchBy && is_bool($this->searching), $this->contextMessage . "must setup PropertyName ({$this->searchBy}) before executing search");
+        $element = $this->executePropertySearch($this->underAnalysis(), $this->searchBy, $propertyValue);
+
+        if ($this->searching) {
+            $assert = 'assertNotNull';
+            $message = $this->contextMessage . "didn't find any object whoose {$this->searchBy} matches {$propertyValue}";
+        } else {
+            $assert = 'assertNull';
+            $message = $this->contextMessage . "found an object whoose {$this->searchBy} matches {$propertyValue}";
+        }
+
+        $this->$assert($element, $message);
+
+        if ($element)
+            $this->addObjectToStack($element, "element with {$this->searchBy} = {$propertyValue}", "digging into element with {$this->searchBy} = {$propertyValue}");
+        $this->searchBy = null;
+        $this->searching = null;
+        return $this;
+    }
+
+    /**
+     * (internal) actually executes the search of an item in a list (no references to this)
+     * 
+     * @param array $list
+     * @param string $propName
+     * @param mixed $propValue
+     * @return mixed item matched or null if none matches
+     */
+    private static function executePropertySearch(array $list, $propName, $propValue)
+    {
+        foreach($list as $item)
+        {
+            if ($item->$propName === $propValue) return $item;
+        }
+        return null;
+    }
+
+    /**
+     * (internal) resolves __call functions whoose method starts with searchItemBy
+     * 
+     * searchItemByFoo('bar') is the same as calling searchItemWith('foo')->matching('bar')
+     */
+    private function callSearchItemBy($method, $paramValue)
+    {
+        $paramName = preg_replace_callback('/^searchItemBy(\w)/', function($match) { return strtolower($match[1]); }, $method);
+        return $this->searchItemWith($paramName)->matching($paramValue);
+    }
+
+    /**
+     * (internal) resolves __call functions whoose method starts with searchItemBy
+     * 
+     * searchItemByFoo('bar') is the same as calling searchItemWith('foo')->matching('bar')
+     */
+    private function callFailToSearchItemBy($method, $paramValue)
+    {
+        $paramName = preg_replace_callback('/^failToSearchItemBy(\w)/', function($match) { return strtolower($match[1]); }, $method);
+        return $this->failToSearchItemWith($paramName)->matching($paramValue);
+    }
+
+#end region search
 
 
 
@@ -678,6 +815,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     }
 
 
+
     /** 
      * Convenient alias for internal functions: has* => returns*, ofNativeType => beingOfNativeType, greaterThan => thatIsGreaterThan, etc...
      */
@@ -722,6 +860,12 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         {
             $methodNotFound = true;
 
+            if (0 === strpos($method, 'searchItemBy')) // starts with searchItemBy
+                return $this->callSearchItemBy($method, $arguments[0]);
+                
+            if (0 === strpos($method, 'failToSearchItemBy')) // TODO alias shouldntExistItemBy?
+                return $this->callFailToSearchItemBy($method, $arguments[0]);
+    
             // remove "and" from method start (and lowercases the next letter)
             $method = preg_replace_callback('/^(?:and)(\w)/', function($match) { return strtolower($match[1]); }, $method);
             // remove Also in the middle
