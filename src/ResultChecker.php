@@ -323,6 +323,22 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         return $this->checkVariable($property, $object->$property);
     }
 
+    /**
+     * matches current value against a virtual property (fetch by magic __get)
+     * @TODO documentation
+     * UNTESTED
+     */
+    protected function matchingVirtualProperty($property)
+    {
+        $object = $this->underAnalysis();
+
+        $this->assertPropertyIsPubliclyAvailable($property);
+
+        $this->assertEquals($this->variableValue, $object->$property);
+
+        return $this;
+    }
+
 #end return value assertions
 
 
