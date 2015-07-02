@@ -2,19 +2,19 @@
 
 class ExampleApi
 {
-	protected $sum = 0;
+    protected $sum = 0;
 
-	public function initSum($number)
-	{
-		$this->sum = $number;
-		return $this->sum;
-	}
+    public function initSum($number)
+    {
+        $this->sum = $number;
+        return $this->sum;
+    }
 
-	public function sum($number)
-	{
-		$this->sum += $number;
-		return $this->sum;
-	}
+    public function sum($number)
+    {
+        $this->sum += $number;
+        return $this->sum;
+    }
 
     public function getTree() { return new ExampleTree(); }
     public function getMagic() { return new ExampleMagic(); }
@@ -30,66 +30,68 @@ class ExampleApi
     public function getZero() { return 0; }
     public function getDouble() { return 4.3; }
     public function getStringZero() { return '0'; }
+    public function getFalse() { return false; }
+    public function getTrue() { return true; }
     
     public function raiseException($code = null, $type = null, $message = null) {
-		$thrownCode = $code?: mt_rand(1, 1000);
-		$thrownMessage = $message ?:uniqid();
-		if (null == $type) throw new Exception($thrownMessage, $thrownCode);
-		else if ('example' == $type) throw new ExampleException($thrownMessage, $thrownCode);
-		else throw new RuntimeException($thrownMessage, $thrownCode);
-	}
+        $thrownCode = $code?: mt_rand(1, 1000);
+        $thrownMessage = $message ?:uniqid();
+        if (null == $type) throw new Exception($thrownMessage, $thrownCode);
+        else if ('example' == $type) throw new ExampleException($thrownMessage, $thrownCode);
+        else throw new RuntimeException($thrownMessage, $thrownCode);
+    }
 
-	/** selects a random element from the list */
+    /** selects a random element from the list */
     public function getRandomElement(array $itemList) {
-		$index = mt_rand(0, count($itemList)-1);
-		return $itemList[$index];
-	}
+        $index = mt_rand(0, count($itemList)-1);
+        return $itemList[$index];
+    }
 }
 
 class ExampleTree {
-	// property and accessor tests
-	public $public_member = 'public';
-	public $public_magic = null;
-	public $public_array = [];
-	public $public_integer = 0;
+    // property and accessor tests
+    public $public_member = 'public';
+    public $public_magic = null;
+    public $public_array = [];
+    public $public_integer = 0;
 
-	protected $protected_member = 'protected';
-	private $private_member = 'private';
+    protected $protected_member = 'protected';
+    private $private_member = 'private';
 
-	public function __construct() {$this->public_magic = new ExampleMagic();}
-	public function getPrivateMember() { return $this->private_member; }
-/*	public function __get($name){
+    public function __construct() {$this->public_magic = new ExampleMagic();}
+    public function getPrivateMember() { return $this->private_member; }
+/*  public function __get($name){
 echo "\nCalled __get($name)\n";
-		if (false !== strpos($name, '_member')) 
-			$memberName = $name . '_member';
+        if (false !== strpos($name, '_member')) 
+            $memberName = $name . '_member';
 echo $memberName; var_dump(isset($this->$memberName));
-		if (isset($this->$memberName)) return $this->$memberName;
-		throw new ExampleException('No such Property', 500);
-	}
+        if (isset($this->$memberName)) return $this->$memberName;
+        throw new ExampleException('No such Property', 500);
+    }
 */
-	// object returned tests
-	public function getNode() { return new ExampleNode(); }
+    // object returned tests
+    public function getNode() { return new ExampleNode(); }
 }
 
 class ExampleNode {
-	public function getLowerChild() { return new Node(); }
+    public function getLowerChild() { return new Node(); }
 }
 
 class ExampleMagic {
-	protected $protected_member = 'protected';
-	public function __get($name){
-		if (isset($this->$name)) return $this->$name;
-		throw new ExampleException('No such Property', 500);
-	}
+    protected $protected_member = 'protected';
+    public function __get($name){
+        if (isset($this->$name)) return $this->$name;
+        throw new ExampleException('No such Property', 500);
+    }
 }
 
 class EvolvedMagic {
-	protected $protected_member = 'protected';
-	public function __get($name){
-		$memberName = $name . '_member';
-		if (isset($this->$memberName)) return $this->$memberName;
-		throw new ExampleException('No such Property', 500);
-	}
+    protected $protected_member = 'protected';
+    public function __get($name){
+        $memberName = $name . '_member';
+        if (isset($this->$memberName)) return $this->$memberName;
+        throw new ExampleException('No such Property', 500);
+    }
 }
 
 class ExampleException extends Exception {}
