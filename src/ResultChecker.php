@@ -426,9 +426,26 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         $this->assertInternalType($nativeType, $this->variableValue, $this->contextMessage . "{$this->variableName} must be an instance of $nativeType");
         return $this;
     }
-    protected function beingAString()   { return $this->beingOfNativeType('string'); }
-    protected function beingAnInteger() { return $this->beingOfNativeType('int'); }
-    protected function beingAnArray()   { return $this->beingOfNativeType('array'); }
+
+    protected function beingABoolean()   { return $this->beingBoolean(); }
+    protected function beingBoolean()    { return $this->beingOfNativeType('boolean'); }
+    protected function beingAString()   { return $this->beingString(); }
+    protected function beingString()    { return $this->beingOfNativeType('string'); }
+    protected function beingAnInteger() { return $this->beingInteger(); }
+    protected function beingInteger()   { return $this->beingOfNativeType('int'); }
+    protected function beingAnArray()   { return $this->beingArray(); }
+    protected function beingArray()     { return $this->beingOfNativeType('array'); }
+    protected function beingADouble()   { return $this->beingFloatingPointNumber(); }
+    protected function beingDouble()    { return $this->beingFloatingPointNumber(); }
+    protected function beingAFloat()    { return $this->beingFloatingPointNumber(); }
+    protected function beingFloat()     { return $this->beingFloatingPointNumber(); }
+
+    protected function beingFloatingPointNumber()
+    {
+        $value = $this->underAnalysis();
+        $this->assertEquals('double', gettype($this->variableValue)); // it's double for this version of php, will it be the same in any version?
+        return $this;
+    }
 
     /** 
      * Tests that the result array is contained in the expectedArray.
