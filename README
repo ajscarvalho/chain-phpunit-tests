@@ -1,0 +1,11 @@
+
+This is an extension to phpunit that allows you to chain tests in a more readable way. Also the function names are chosen to be as near as possible to the written/spoken language.
+
+
+I encourage you to inspect the test class to check for intended use of this extension.
+
+
+to test this release, just run:
+
+$ phpunit tests/
+

@@ -1,0 +1,26 @@
+{
+    "name": "sapo-php/testabstraction",
+    "description": "A test abstraction lib that allows you to write tests like: $this->$fname($param1...$paramN)->expectInstanceOf($className)->expectProperty($prop)->toEqual($value) and even $this->expectException($errorCode, $exceptionClass, $exceptionMessageMatch)->doSomethingEvilThatThrowsException()",
+    "authors": [
+        {
+            "name": "Alexandre Amaral de Carvalho",
+            "email": "ajscarvalho@gmail.com"
+        }
+    ],
+
+    "minimum-stability": "dev",
+
+    "repositories": [
+    ],
+
+    "require": {
+    },
+
+    "autoload": {
+
+        "psr-4": {
+            "Sapo\\TestAbstraction\\": "src/"
+        }
+
+    }
+}
