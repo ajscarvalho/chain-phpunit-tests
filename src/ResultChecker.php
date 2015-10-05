@@ -494,7 +494,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     protected function beingFloatingPointNumber()
     {
         $value = $this->underAnalysis();
-        $this->assertEquals('double', gettype($this->variableValue)); // it's double for this version of php, will it be the same in any version?
+        $this->assertEquals('double', gettype($this->variableValue), "{$this->variableValue} must be a double, found ". gettype($this->variableValue)); // it's double for this version of php, will it be the same in any version?
         return $this;
     }
 
