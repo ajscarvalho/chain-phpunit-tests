@@ -6,6 +6,7 @@ use ReflectionObject;
 use Exception;
 use ReflectionException;
 use PHPUnit_Framework_TestCase;
+use Sapo\TestAbstraction\Validator\NumericalValidator;
 
 /**
  */ 
@@ -339,6 +340,20 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         return $this;
     }
 
+    /**
+     * Takes the value being analyzed and checks the length of either string or array
+     * @TODO documentation
+     * UNTESTED
+     */
+    protected function ofLength()
+    {
+        $variable = $this->variableValue;
+        if (gettype($variable) == 'string') return NumericalValidator::factory($this, $this->variableName . ' string length',     strlen($variable), $this->contextMessage);
+        if (gettype($variable) == 'array' ) return NumericalValidator::factory($this, $this->variableName . ' array cardinality', count($variable),  $this->contextMessage);
+
+        throw new Exception($this->variableName . ' must be either string or array to run ofLength function');
+    }
+
 #end return value assertions
 
 
@@ -495,6 +510,13 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     {
         $value = $this->underAnalysis();
         $this->assertEquals('double', gettype($this->variableValue), "{$this->variableValue} must be a double, found ". gettype($this->variableValue)); // it's double for this version of php, will it be the same in any version?
+        return $this;
+    }
+
+    protected function beingNumeric()
+    {
+        $this->beingOfNativeType('string');
+        $this->assertRegExp('/^\d+$/', $this->variableValue, $this->contextMessage . "{$this->variableName} must be numeric, instead found {$this->variableValue}");
         return $this;
     }
 
