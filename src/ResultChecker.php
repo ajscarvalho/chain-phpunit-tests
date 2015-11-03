@@ -6,7 +6,11 @@ use ReflectionObject;
 use Exception;
 use ReflectionException;
 use PHPUnit_Framework_TestCase;
+use Sapo\TestAbstraction\Validator\ConditionalValidator;
+use Sapo\TestAbstraction\Validator\DateValidator;
 use Sapo\TestAbstraction\Validator\NumericalValidator;
+
+use DateTime;
 
 /**
  */ 
@@ -43,7 +47,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * set an API/Object for analysis
      * @param stdClass $api Any Object that provides an interface that we can call to obtain a result
-     * @return this (chainable)
+     * @return self (chainable)
      * TESTED in ApiCallTestCase
      */
     protected function checkAPI($api) 
@@ -57,7 +61,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * clears the analyze stack and push the object on it (the analysis stack)
      * 
      * @param stdClass $object Any Object
-     * @return this (chainable)
+     * @return self (chainable)
      *
      * @TODO add example
      * UNTESTED
@@ -74,7 +78,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * should be private
      * 
      * @param stdClass $object Any Object
-     * @return this (chainable)
+     * @return self (chainable)
      * TESTED by $this->checkThatProperty, checkThatIndex, callAPI, callObjectMethod in ApiCallTestCase 
      *      (function is private)
      */
@@ -92,7 +96,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 
     /**
      * Terminates analysis on the object, return to the previous object
-     * @return this (chainable)
+     * @return self (chainable)
      * TESTED in testStackingAnalysis
      */
     protected function endObjectAnalysis() 
@@ -149,7 +153,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * analyze a variable, setting it's name (so we can reuse the same reporting)
      * @param string $name Variable Name (For Error Reporting)
      * @param mixed $value Variable Value
-     * @return this (chainable)
+     * @return self (chainable)
      * UNTESTED
      */
     protected function checkVariable($name, $value) { 
@@ -194,7 +198,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks if the object under analysis is an instance of the specified objectType
      * @param string $objectType
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->someMethodName()->returnsInstanceOf('Car'); </code>
      * TESTED everywhere, e.g. testObjectResult
      */
@@ -207,7 +211,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * Checks if the object under analysis is an instance of a native type (int, float, string, array)
      * if it matches, also runs analyzeVariable on the value
      * @param string $nativeType
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->someMethodName()->returnsNativeType('int'); </code>
      * TESTED in testIntegerResult
      */
@@ -239,7 +243,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks that the object under analysis is Null (Function/method return value)
      *
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->someMethodName()->returnsNull(); </code>
      * TESTED in testReturnsNull
      */
@@ -253,7 +257,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks that the object under analysis is an array of a determined size (Function/method return value)
      * @param int $expectedCardinality
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->giveMeAPage($offset = 0, $size = 3)->returnsArrayOfSize(3); // if there are suficient elements in the list </code>
      * TESTED by testCheckThatIndex
      */
@@ -291,7 +295,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * Checks that the object under analysis has a determined property (Function/method return value)
      * if it matches, also runs analyzeVariable on the value
      * @param string $property
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getCar()->withExistingProperty('engine')-> ...do something with engine...; </code>
      * TESTED by testWithExistingPublicProperty
      */
@@ -310,7 +314,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * Checks that the object under analysis can access some property by use of a magic __get method
      * if it matches, also runs analyzeVariable on the value
      * @param string $property
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getCar()->withVirtualProperty('engine')-> ...do something with engine...; </code>
      * TESTED by testWithVirtualPropertyByMagicGet
      */
@@ -340,6 +344,12 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         return $this;
     }
 
+#end region return value assertions, examined properties
+
+
+
+#region Validators instantiation
+
     /**
      * Takes the value being analyzed and checks the length of either string or array
      * @TODO documentation
@@ -354,8 +364,24 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
         throw new Exception($this->variableName . ' must be either string or array to run ofLength function');
     }
 
-#end return value assertions
+    protected function beingDate()
+    {
+        $this->beingInstanceOf('DateTime');
+        return DateValidator::factory($this, $this->variableName, $this->variableValue, $this->contextMessage);
+    }
 
+    protected function ofDate()
+    {
+        return DateValidator::factory($this, $this->variableName, new DateTime($this->variableValue), $this->contextMessage);
+    }
+
+    protected function when($property)
+    {
+        $object = $this->underAnalysis();
+        return ConditionalValidator::factory($this, $property, $object->$property, $this->contextMessage);
+    }
+
+#end region Validators instantiation
 
 
 #region value tests
@@ -371,7 +397,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks that the variable under analysis matches type and value with the argument (simple types only)
      * @param mixed $expectedValue
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('engine')->thatEquals('V12'); </code>
      * TESTED by testThatEqualsFails
      */
@@ -387,7 +413,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks that the variable under analysis matches the value of the argument (simple types only)
      * @param mixed $expectedValue
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('numberOfDoors')->thatIsSimilarTo('2'); // actually should return 2 </code>
      * TESTED by testThatIsSimilarToFails
      */
@@ -400,7 +426,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Checks that the variable under analysis has a value over a determined threshold
      * @param mixed $comparisionValue the value we should top
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('topSpeedKmH')->thatIsGreaterThan('300'); // e.g. 363 (Km/h) </code>
      * TESTED by testThatIsGreaterThanFails
      */
@@ -412,7 +438,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 
     /**
      * Checks that the variable under analysis has some non-null value
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('color')->thatHasSomeValue(); // e.g. "red" </code>
      * TESTED by testThatHasSomeValueFails
      */
@@ -433,7 +459,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 
     /**
      * Checks that the variable under analysis has some null value
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari()->returnsInstanceOf('Car')->withExistingProperty('motorOil')->thatIsEmpty(); // e.g. "red" </code>
      * UNTESTED
      */
@@ -455,7 +481,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Match a value against a list of possible values
      * @param mixed $values,... variable value is checked against the argument list to see if it matches one of the arguments
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getFerrari(2010)->returnsInstanceOf('Car')->withExistingProperty('model')->beingOneOf('599 GTO', 'SA APERTA', '458 Challenge', 'Ferrari California 30'); </code>
      * TESTED by testbeingOneOfFails
      */
@@ -470,7 +496,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * tests if a variable/property is an instance of an object
      * @param string $objectType
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getRandomPersonWithPet('cat')->returnsInstanceOf('Person')->withExistingProperty('pet')->beingInstanceOf("Cat"); </code>
      * TESTED by testBeingInstanceOf
      */
@@ -483,7 +509,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * tests if a variable/property is of the internal type specified by the argument
      * @param string $nativeType
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->getRandomPerson()->returnsInstanceOf('Person')->withExistingProperty('age')->beingOfNativeType("int"); </code>
      * TESTED by testBeingInstanceOf
      */
@@ -530,7 +556,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * </code>
      * 
      * @param array $expectedArray the list of values that can possibly be returned in the return array
-     * @return this (chainable)
+     * @return self (chainable)
      * TESTED by testThatIsSubHashTableOfFails
      */
     protected function thatIsSubHashTableOf($expectedArray)
@@ -561,7 +587,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      *      $this->getZoo()->getLion()->isFeline()->returnsBoolean()->thatIsTrue()
      * </code>
      * 
-     * @return this (chainable)
+     * @return self (chainable)
      * UNTESTED
      */
     protected function thatIsTrue()
@@ -576,7 +602,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      *      $this->getZoo()->getMonkey()->isFeline()->returnsBoolean()->thatIsFalse()
      * </code>
      * 
-     * @return this (chainable)
+     * @return self (chainable)
      * UNTESTED
      */
     protected function thatIsFalse()
@@ -587,14 +613,14 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     
     /**
      * Just acts as documentation
-     * @return this (chainable)
+     * @return self (chainable)
      */
     protected function thatIsOptional() { return $this; }
     
     /** 
      * tests that the result string starts with the expectedPrefix
      * @param string $expectedPrefix the variable must start with this string
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> $this->openGift()->returnsInstanceOf('Car')->withExistingProperty('name')->thatStartsWith('Ferra'); // Yes, it's a Ferrari </code>
      * TESTED by testThatStartsWithFails
      */
@@ -618,7 +644,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * to do the actual search you must call the "matching" function
      * 
      * @param $propertyName the property to analyze
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> 
      *      $this->getFriendList()->searchItemWith('name')->matching('Peter')
      *      //Or
@@ -637,7 +663,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * 
      * @see searchItemWith
      * @param $propertyName the property to analyze
-     * @return this (chainable)
+     * @return self (chainable)
      */
     protected function failToSearchItemWith($propertyName)
     {
@@ -651,7 +677,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * to do the actual search you must first call the "searchItemWith" function
      * 
      * @param $propertyValue the value to match agains the setup property
-     * @return this (chainable)
+     * @return self (chainable)
      * <code> 
      *      $this->getFriendList()->searchItemWith('name')->matching('Peter')
      *      //Or
@@ -744,7 +770,7 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
      * @param int $code The Exception Code
      * @param string $type The Exception Class Name
      * @param string $mesg A significant part of the Exception Message (You are not obliged to reproduce the whole message)
-     * @return this (chainable)
+     * @return self (chainable)
      * @see __call, call, callObjectMethod below
      * <code> $this->expectException(404, 'NotFoundException', 'Unknown Ferrari')->getFerrari('Polo'); // ref to VW Polo </code> 
      */
@@ -810,9 +836,9 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Analyze a property from the object on the top of the stack by adding it to the stack
      * Also checks if the property exists on the object
-     * @param $property the object property to analyze
-     * @param $contextMessage a context to add to error reports
-     * @return this (chainable)
+     * @param string $property the object property to analyze
+     * @param string $contextMessage a context to add to error reports
+     * @return self (chainable)
      * <code> $this->getPerson('Miguel')->checkThatProperty('father')->returnsInstanceOf('Person'); </code>
      */
     protected function checkThatProperty($property, $contextMessage = null)
@@ -829,10 +855,10 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
     /**
      * Analyze an index from an object on the top of the stack by adding it to the stack
      * Also checks if the object is an array and that the index exists on the array
-     * @param $arrayIndex the index to analyze
-     * @param $variableName the name of the property for the index to add to error reports (Could be derived if stored alongside in the Stack)
-     * @param $contextMessage a context to add to error reports
-     * @return this (chainable)
+     * @param int|string $arrayIndex the index to analyze
+     * @param string $variableName the name of the property for the index to add to error reports (Could be derived if stored alongside in the Stack)
+     * @param string $contextMessage a context to add to error reports
+     * @return self (chainable)
      * <code> 
      *      $this->getPerson('Miguel')->getFriendsSortedByName() // see below __call and callObjectMethod
      *          ->checkThatIndex(0)
@@ -989,10 +1015,10 @@ class ResultChecker extends PHPUnit_Framework_TestCase {
 
     /**
      * set a context message for errors that will appear on error reports
-     * @param $contextMessage message that will be sent in case of error 
+     * @param string $contextMessage message that will be sent in case of error
      *      that helps to contextualize the test step that throwed the error.
      *      this message may be formatted according to the requested output format (@TODO)
-     * @return this (chainable)
+     * @return self (chainable)
      * TESTED, but no tests for it now 
      */
     protected function provingThat($contextMessage) 
