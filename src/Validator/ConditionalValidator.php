@@ -14,6 +14,7 @@ class ConditionalValidator extends PHPUnit_Framework_TestCase
     protected $variableValue;
     protected $contextMessage;
     protected $conditionalResult;
+
     /**
      * @param ResultChecker $rc
      * @param string $name name of the variable to be tested
